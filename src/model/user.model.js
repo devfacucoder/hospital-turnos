@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 
 const userSchema = new Schema(
   {
@@ -13,14 +13,7 @@ const userSchema = new Schema(
       required: [true, "El apellido es obligatorio"],
       trim: true,
     },
-    email: {
-      type: String,
-      required: [true, "El email es obligatorio"],
-      unique: true,
-      lowercase: true,
-      trim: true,
-      match: [/^\S+@\S+\.\S+$/, "Formato de email inválido"],
-    },
+    
     contrasenna: {
       type: String,
       required: [true, "La contraseña es obligatoria"],
@@ -32,6 +25,10 @@ const userSchema = new Schema(
       ref: "Role",
       required: true,
     },
+    especialidad: {
+      type: Schema.Types.ObjectId,
+      ref: "Especialidad",
+    },
   },
   {
     timestamps: true,
@@ -39,13 +36,14 @@ const userSchema = new Schema(
   }
 );
 
+
 // 🔹 Middleware para hashear la contraseña antes de guardar
+
 userSchema.pre("save", async function (next) {
   if (!this.isModified("contrasenna")) return next();
   this.contrasenna = await bcrypt.hash(this.contrasenna, 10);
   next();
 });
-
 // 🔹 Método para comparar contraseñas
 userSchema.methods.comparePassword = async function (plainPassword) {
   return await bcrypt.compare(plainPassword, this.contrasenna);
