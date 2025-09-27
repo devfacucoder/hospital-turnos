@@ -8,12 +8,21 @@ const userSchema = new Schema(
       required: [true, "El nombre es obligatorio"],
       trim: true,
     },
+    numId:{
+      type: String,
+      unique: true,
+      required: [true, "El numero de identificacion es obligatorio"],
+      trim: true,
+    },
     apellido: {
       type: String,
       required: [true, "El apellido es obligatorio"],
       trim: true,
     },
-    
+    turnos:{
+      type: [{ type: Schema.Types.ObjectId, ref: "Turno" }],
+      default: []
+    },
     contrasenna: {
       type: String,
       required: [true, "La contraseña es obligatoria"],

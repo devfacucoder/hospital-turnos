@@ -3,7 +3,7 @@ import { Schema, model } from "mongoose";
 const turnosSchema = new Schema(
   {
     fecha: {
-      type: Date,
+      type: String,
       required: [true, "La fecha del turno es obligatoria"],
     },
     hora: {
