@@ -26,8 +26,12 @@ export const createMedico = async (req, res) => {
 export const getMedicos = async (req, res) => {
   try {
     const idMedicoRole = await roleModel.findOne({ role: "medico" });
-    const medicos = await userModel.find({ role: idMedicoRole });
-    res.status.json({message:"list of doctors obtained",data:medicos});
+        const medicos = await userModel
+      .find({ role: idMedicoRole })
+      .populate("especialidad", "nombre"); 
+      // 👆 trae solo el campo `nombre` de la colección Especialidad
+
+    res.status(200).json({message:"list of doctors obtained",data:medicos});
   } catch (error) {
     console.error("Error fetching medicos:", error);
     res.status(500).json({ message: "Server error" });
@@ -52,26 +56,37 @@ export const getMedicoById = async (req, res) => {
 
 export const updateMedico = async (req, res) => {
   try {
-    const { nombre, apellido, contrasenna, especialidad } = req.body;
-    const medico = await userModel.findById(req.params.id);
-    if (!medico) {
-      return res.status(404).json({ message: "Doctor not found" });
-    }
-    let especialidadDoc = medico.especialidad;
+    const { id } = req.params;
+    const { nombre, apellido, especialidad } = req.body;
+
+    // objeto dinámico con solo los campos enviados
+    const updateData = {};
+
+    if (nombre) updateData.nombre = nombre;
+    if (apellido) updateData.apellido = apellido;
+
     if (especialidad) {
-      especialidadDoc = await especialidadModel.findOne({
-        nombre: especialidad,
-      });
+      const especialidadDoc = await especialidadModel.findOne({ nombre: especialidad });
       if (!especialidadDoc) {
         return res.status(400).json({ message: "Invalid specialty" });
       }
+      updateData.especialidad = especialidadDoc._id;
     }
-    medico.nombre = nombre ?? medico.nombre;
-    medico.apellido = apellido ?? medico.apellido;
-    medico.contrasenna = contrasenna ?? medico.contrasenna;
-    medico.especialidad = especialidadDoc;
-    await medico.save();
-    res.status(200).json({ message: "Doctor updated", data: medico });
+
+    // 🔥 una sola operación, más eficiente
+    const updatedMedico = await userModel.findByIdAndUpdate(id, updateData, {
+      new: true, // devuelve el médico actualizado
+      runValidators: true, // respeta las validaciones del modelo
+    });
+
+    if (!updatedMedico) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+
+    res.status(200).json({
+      message: "Doctor updated successfully",
+      data: updatedMedico,
+    });
   } catch (error) {
     console.error("Error updating doctor:", error);
     res.status(500).json({ message: "Server error" });
